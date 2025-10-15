@@ -7,22 +7,22 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from builtins import range
 from functools import partial
-import _Framework.ButtonMatrixElement as ButtonMatrixElement
-import _Framework.ClipCreator as ClipCreator
+from _Framework.ButtonMatrixElement import ButtonMatrixElement
+from _Framework.ClipCreator import ClipCreator
 from _Framework.ComboElement import ComboElement, DoublePressElement, MultiElement
 from _Framework.ControlSurface import OptimizedControlSurface
-import _Framework.Layer as Layer
+from _Framework.Layer import Layer
 from _Framework.ModesComponent import AddLayerMode, DelayMode, ImmediateBehaviour, ModesComponent
 from _Framework.Resource import PrioritizedResource
-import _Framework.SessionRecordingComponent as SessionRecordingComponent
-import _Framework.SessionZoomingComponent as SessionZoomingComponent
+from _Framework.SessionRecordingComponent import SessionRecordingComponent
+from _Framework.SessionZoomingComponent import SessionZoomingComponent
 from _Framework.Util import recursive_map
-import _APC.APC as APC
+from _APC.APC import APC
 from _APC.ControlElementUtils import make_button, make_encoder, make_pedal_button, make_ring_encoder, make_slider
-import _APC.DetailViewCntrlComponent as DetailViewCntrlComponent
-import _APC.DeviceBankButtonElement as DeviceBankButtonElement
-import _APC.DeviceComponent as DeviceComponent
-import _APC.SessionComponent as SessionComponent
+from _APC.DetailViewCntrlComponent import DetailViewCntrlComponent
+from _APC.DeviceBankButtonElement import DeviceBankButtonElement
+from _APC.DeviceComponent import DeviceComponent
+from _APC.SessionComponent import SessionComponent
 from _APC.SkinDefault import make_crossfade_button_skin, make_default_skin, make_rgb_skin, make_stop_button_skin
 from . import Colors
 from .BankToggleComponent import BankToggleComponent
@@ -32,10 +32,10 @@ from .TransportComponent import TransportComponent
 NUM_TRACKS = 8
 NUM_SCENES = 5
 
-class APC40_MkII(APC, OptimizedControlSurface):
+class APC40_MkII_step(APC):
 
     def __init__(self, *a, **k):
-        (super(APC40_MkII, self).__init__)(*a, **k)
+        (super(APC40_MkII_step, self).__init__)(*a, **k)
         self._color_skin = make_rgb_skin()
         self._default_skin = make_default_skin()
         self._stop_button_skin = make_stop_button_skin()
@@ -60,8 +60,8 @@ class APC40_MkII(APC, OptimizedControlSurface):
     def _create_controls(self):
         make_on_off_button = partial(make_button, skin=(self._default_skin))
 
-        def make_color_button(*a, **k):
-            button = make_button(a, skin=self._color_skin, **k)
+        def make_color_button(channel, identifier, **k):
+            button = make_button(channel, identifier, skin=self._color_skin, **k)
             button.is_rgb = True
             button.num_delayed_messages = 2
             return button
