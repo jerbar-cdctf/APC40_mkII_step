@@ -29,6 +29,7 @@ from .BankToggleComponent import BankToggleComponent
 from .MixerComponent import MixerComponent
 from .QuantizationComponent import QuantizationComponent
 from .TransportComponent import TransportComponent
+from .StepSequencer import StepSequencer
 NUM_TRACKS = 8
 NUM_SCENES = 5
 
@@ -53,6 +54,38 @@ class APC40_MkII_step(APC):
             self._session.set_mixer(self._mixer)
         self.set_highlighting_session_component(self._session)
         self.set_device_component(self._device)
+        self._sequencer = StepSequencer(
+            control_surface=self,
+            song=self.song(),
+            shift_button=self._shift_button,
+            user_button=self._user_button,
+            pan_button=self._pan_button,
+            sends_button=self._sends_button,
+            left_button=self._left_button,
+            right_button=self._right_button,
+            up_button=self._up_button,
+            down_button=self._down_button,
+            scene_launch_buttons_raw=self._scene_launch_buttons_raw,
+            clip_stop_buttons_raw=[btn for btn in self._stop_buttons],
+            matrix_rows_raw=self._matrix_rows_raw,
+            knob_controls=self._mixer_encoders,
+            track_select_buttons=self._raw_select_buttons,
+            device_controls=self._device_controls_raw,
+            prev_device_button=self._prev_device_button,
+            next_device_button=self._next_device_button,
+        )
+        # hook mode buttons for sequencer control
+        try:
+            self._user_button.add_value_listener(self._on_user_button)
+            self._pan_button.add_value_listener(self._on_exit_to_normal)
+            self._sends_button.add_value_listener(self._on_exit_to_normal)
+        except Exception:
+            pass
+
+        self._sequencer_active = False
+        self._saved_session_matrix_buttons = None
+        self._saved_session_scene_buttons = None
+        self._saved_highlighting_session = self._session
 
     def _with_shift(self, button):
         return ComboElement(button, modifiers=[self._shift_button])
@@ -127,8 +160,8 @@ class APC40_MkII_step(APC):
         self._nudge_up_button = make_button(0, 101, name="Nudge_Up_Button")
         self._tap_tempo_button = make_button(0, 99, name="Tap_Tempo_Button")
         self._tempo_control = make_encoder(0, 13, name="Tempo_Control")
-        self._device_controls = ButtonMatrixElement(rows=[
-         [make_ring_encoder((16 + index), (24 + index), name=("Device_Control_%d" % index)) for index in range(8)]])
+        self._device_controls_raw = [make_ring_encoder((16 + index), (24 + index), name=("Device_Control_%d" % index)) for index in range(8)]
+        self._device_controls = ButtonMatrixElement(rows=[self._device_controls_raw])
         self._device_control_buttons_raw = [make_on_off_button(0, 58 + index) for index in range(8)]
         self._device_bank_buttons = ButtonMatrixElement(rows=[
          [DeviceBankButtonElement(button, modifiers=[self._shift_button]) for button in self._device_control_buttons_raw]])
@@ -263,6 +296,142 @@ class APC40_MkII_step(APC):
         self._quantization_selection = QuantizationComponent(name="Quantization_Selection",
           is_enabled=False,
           layer=Layer(quantization_buttons=(self._quantization_buttons)))
+
+    def _enter_sequencer_mode(self):
+        if self._sequencer_active:
+            return
+        self._sequencer_active = True
+        # Physically remove button assignments from Session to stop clip launching
+        try:
+            if hasattr(self, "_session"):
+                # Store original button assignments for restoration
+                self._saved_session_matrix_buttons = self._session_matrix
+                self._saved_session_scene_buttons = self._scene_launch_buttons
+                # Remove all button bindings from Session
+                self._session.set_clip_launch_buttons(None)
+                self._session.set_scene_launch_buttons(None)
+                self._session.set_enabled(False)
+            if hasattr(self, "_session_zoom"):
+                self._session_zoom.set_enabled(False)
+            self.set_highlighting_session_component(None)
+        except Exception:
+            pass
+        try:
+            # clear session lights on grid
+            self._sequencer._clear_all_leds()
+        except Exception:
+            pass
+        # Temporarily disable Device parameter mapping so device encoders are free for sequencer
+        try:
+            if hasattr(self, "_device"):
+                # fully disable device component and release encoders
+                self._device.set_enabled(False)
+                self._device.set_parameter_controls(None)
+                # also clear layer bindings temporarily
+                try:
+                    self._saved_device_layer = getattr(self._device, 'layer', None)
+                except Exception:
+                    self._saved_device_layer = None
+                try:
+                    from _Framework.Layer import Layer as _TmpLayer
+                    self._device.layer = _TmpLayer()
+                except Exception:
+                    pass
+                # ensure Live rebuilds MIDI map to drop any forwarding
+                self.request_rebuild_midi_map()
+        except Exception:
+            pass
+        # Temporarily remove Mixer track selection so select buttons can be used for note length
+        try:
+            if hasattr(self, "_mixer"):
+                # Save original mixer layer and clear track_select_buttons binding
+                from _Framework.Layer import Layer as _Layer
+                self._saved_mixer_layer = getattr(self._mixer, 'layer', None)
+                # Build a layer identical to current but without track_select_buttons
+                self._mixer.layer = _Layer(volume_controls=(self._volume_controls),
+                                           arm_buttons=(self._arm_buttons),
+                                           solo_buttons=(self._solo_buttons),
+                                           mute_buttons=(self._mute_buttons),
+                                           shift_button=(self._shift_button),
+                                           prehear_volume_control=(self._prehear_control),
+                                           crossfader_control=(self._crossfader_control),
+                                           crossfade_buttons=(self._crossfade_buttons))
+        except Exception:
+            pass
+        try:
+            self._sequencer._enter()
+        except Exception as e:
+            try:
+                self.log_message("Sequencer enter error: " + str(e))
+            except Exception:
+                pass
+        try:
+            # Refresh grid to show existing notes
+            self.log_message("About to call _refresh_grid()")
+            self._sequencer._refresh_grid()
+            self.log_message("_refresh_grid() completed")
+        except Exception as e:
+            try:
+                self.log_message("Grid refresh error: " + str(e))
+            except Exception:
+                pass
+
+    def _exit_sequencer_mode(self):
+        if not self._sequencer_active:
+            return
+        self._sequencer_active = False
+        try:
+            self._sequencer._exit()
+        except Exception:
+            pass
+        # Restore Session button assignments and re-enable
+        try:
+            if hasattr(self, "_session"):
+                # Restore button bindings
+                if self._saved_session_matrix_buttons is not None:
+                    self._session.set_clip_launch_buttons(self._saved_session_matrix_buttons)
+                if self._saved_session_scene_buttons is not None:
+                    self._session.set_scene_launch_buttons(self._saved_session_scene_buttons)
+                self._session.set_enabled(True)
+            if hasattr(self, "_session_zoom"):
+                self._session_zoom.set_enabled(True)
+            self.set_highlighting_session_component(self._saved_highlighting_session)
+        except Exception:
+            pass
+        # Re-enable Device parameter mapping
+        try:
+            if hasattr(self, "_device") and hasattr(self, "_device_controls"):
+                self._device.set_enabled(True)
+                self._device.set_parameter_controls(self._device_controls)
+                # restore original device layer if saved
+                try:
+                    if hasattr(self, '_saved_device_layer') and self._saved_device_layer is not None:
+                        self._device.layer = self._saved_device_layer
+                except Exception:
+                    pass
+                # rebuild MIDI map to restore forwarding
+                self.request_rebuild_midi_map()
+        except Exception:
+            pass
+        # Restore Mixer track selection binding and rebuild map
+        try:
+            if hasattr(self, "_mixer") and hasattr(self, '_saved_mixer_layer') and self._saved_mixer_layer is not None:
+                self._mixer.layer = self._saved_mixer_layer
+                self.request_rebuild_midi_map()
+        except Exception:
+            pass
+
+    def _on_user_button(self, value):
+        if not value:
+            return
+        if not self._sequencer_active:
+            self._enter_sequencer_mode()
+        else:
+            self._exit_sequencer_mode()
+
+    def _on_exit_to_normal(self, value):
+        if value:
+            self._exit_sequencer_mode()
 
     def _create_recording(self):
         record_button = MultiElement(self._session_record_button, self._foot_pedal_button.single_press)
