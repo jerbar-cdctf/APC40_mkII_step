@@ -7,9 +7,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from builtins import range
 from functools import partial
-
-# LOGGING CONTROL: Set to False to disable all logging
-ENABLE_LOGGING = False
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
 from _Framework.ClipCreator import ClipCreator
 from _Framework.ComboElement import ComboElement, DoublePressElement, MultiElement
@@ -317,8 +314,7 @@ class APC40_MkII_step(APC):
                 self._session.set_scene_launch_buttons(None)
                 # CRITICAL: Remove stop_all_clips_button so StepSequencer can use it
                 self._session.set_stop_all_clips_button(None)
-                if ENABLE_LOGGING:
-                    self.log_message("Stop All button removed from Session component")
+                self.log_message("Stop All button removed from Session component")
                 self._session.set_enabled(False)
             if hasattr(self, "_session_zoom"):
                 self._session_zoom.set_enabled(False)
@@ -371,21 +367,17 @@ class APC40_MkII_step(APC):
             self._sequencer._enter()
         except Exception as e:
             try:
-                if ENABLE_LOGGING:
-                    self.log_message("Sequencer enter error: " + str(e))
+                self.log_message("Sequencer enter error: " + str(e))
             except Exception:
                 pass
         try:
             # Refresh grid to show existing notes
-            if ENABLE_LOGGING:
-                self.log_message("About to call _refresh_grid()")
+            self.log_message("About to call _refresh_grid()")
             self._sequencer._refresh_grid()
-            if ENABLE_LOGGING:
-                self.log_message("_refresh_grid() completed")
+            self.log_message("_refresh_grid() completed")
         except Exception as e:
             try:
-                if ENABLE_LOGGING:
-                    self.log_message("Grid refresh error: " + str(e))
+                self.log_message("Grid refresh error: " + str(e))
             except Exception:
                 pass
 
@@ -407,8 +399,7 @@ class APC40_MkII_step(APC):
                     self._session.set_scene_launch_buttons(self._saved_session_scene_buttons)
                 # Restore stop_all_clips_button to Session
                 self._session.set_stop_all_clips_button(self._stop_all_button)
-                if ENABLE_LOGGING:
-                    self.log_message("Stop All button restored to Session component")
+                self.log_message("Stop All button restored to Session component")
                 self._session.set_enabled(True)
             if hasattr(self, "_session_zoom"):
                 self._session_zoom.set_enabled(True)

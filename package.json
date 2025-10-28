@@ -1,0 +1,23 @@
+{
+  "name": "apc40_mkii_step",
+  "version": "1.0.0",
+  "description": "Unofficial repository for Ableton Live 12.0.1 MIDI Remote Scripts Python Sources by Julien Bayle / Structure Void",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jerbar-cdctf/APC40_mkII_step.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jerbar-cdctf/APC40_mkII_step/issues"
+  },
+  "homepage": "https://github.com/jerbar-cdctf/APC40_mkII_step#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.9.1"
+  }
+}

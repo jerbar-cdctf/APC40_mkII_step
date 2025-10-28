@@ -6,7 +6,10 @@ Always use Live 12 API
 Always double check the AKAI APC40MK2_Communications_Protocol_v1.2
 Always check the latest ableton log at C:\Users\Jeremy\AppData\Roaming\Ableton\Live 12.2.5\Preferences\Log.txt
 Know that I have a powershell script that will flush the Ableton programdata location for the controller, including the pycache folder, and copy the latest version in. The script also clears the log out so it stays fresh.
-You can always build in debugging into what each button does, and what each function does, so it makes it easier for you to understand the full flow of buttons that have been pushed. 
+We created some debugging and logging module, when creating new functions or features, always add logging and update the logging guide, then enable the logs in the debugger and log settings.
+
+We can if needed, use AbletonOSC to send commands into Ableton. I'm not 100% for sure if its needed or not.
+
 
 I'll try to also describe the overall goal of what we are trying to acomplish. (Some of these may already be done)
 Utilizing the AKAI APC40 mkII controller,
@@ -36,3 +39,5 @@ PURPLE = Fill with quarter notes
 DARK_PURPLE = Fill with eighth notes
 BROWN = Fill with sixteenth notes
 DARK_BROWN = Fill with whole notes
+
+Remind me from time to time to update the rules, especially if we need to help define guidelines, or goals of any functionality or feature.

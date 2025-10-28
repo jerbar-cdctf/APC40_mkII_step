@@ -123,22 +123,27 @@ NOTE LENGTH SELECTION
 ---------------------
 TRACK SELECT BUTTONS (Bottom Row, buttons 1-8):
 Press to cycle through note lengths:
-  1/16 bar → 1/8 bar → 1/4 bar → 1/2 bar → 1 bar → 2 bars → 4 bars → 8 bars
+ 1/2 bar -> 8 bar -> 4 bar -> 2 bar -> 1 bar -> 1/4 bar -> 1/8 bar -> 1/16 bar  
++Shift 
+ None -> 16 bar -> 14 bar -> 12 bar -> 10 bar -> 1/32 bar -> 1/64 bar ->1/128 bar
 
 Current selection lights up ORANGE.
-When changing, a rainbow animation shows coverage on the grid.
 
 
 LOOP LENGTH CONTROL
 -------------------
-MASTER BUTTON + TRACK SELECT:
-Hold Master, press Track Select buttons to set loop length:
+, press Track Select buttons to set loop length:
   Button 1 = 1 bar
   Button 2 = 2 bars
   Button 3 = 4 bars
   Button 4 = 8 bars
   Button 5 = 16 bars
-
++Shift
+  Button 1 = 32 bar
+  Button 2 = 64 bars
+  Button 3 = 128 bars
+  Button 4 = 192 bars
+  Button 5 = 256 bars
 
 FUNCTION SYSTEM
 ---------------
